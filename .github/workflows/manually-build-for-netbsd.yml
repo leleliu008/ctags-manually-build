@@ -143,7 +143,6 @@ jobs:
           install: configure $CONFIGURE_ARGS
           EOF
 
-    steps:
       - uses: leleliu008/github-actions-vagrant@main
         with:
           mem: 4096
