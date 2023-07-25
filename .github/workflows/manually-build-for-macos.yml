@@ -139,7 +139,7 @@ jobs:
           dep-pkg: $DEP_PKG
           dep-upp: pkg-config
           bsystem: autogen
-          install: configure $CONFIGURE_ARGS
+          install: configure $CONFIGURE_ARGS --disable-static
           EOF
 
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/xcpkg/master/xcpkg
