@@ -112,13 +112,6 @@ jobs:
               DEP_PKG="$DEP_PKG libiconv"
           fi
 
-          if [ '${{ github.event.inputs.enable-seccomp }}' = 'false' ] ; then
-              CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-seccomp"
-          else
-              CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-seccomp"
-              DEP_PKG="$DEP_PKG libseccomp"
-          fi
-
           case ${{ github.event.inputs.regex-backend }} in
               none)
                 CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-pcre2 --without-included-regex"
