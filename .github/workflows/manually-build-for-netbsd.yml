@@ -161,7 +161,7 @@ jobs:
             run ./ppkg setup
             run ./ppkg update
 
-            run uctags.yml ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+            run mv uctags.yml ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
             run ./ppkg install uctags --link-type=static-only --install-lib=static
             run ./ppkg pack    uctags
