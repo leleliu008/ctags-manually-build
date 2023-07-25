@@ -148,7 +148,6 @@ jobs:
           git-url: https://github.com/universal-ctags/ctags
           license: GPL-2.0-or-later
           dep-pkg: $DEP_PKG
-          dep-upp: pkg-config
           bsystem: autogen
           install: configure $CONFIGURE_ARGS
           EOF
