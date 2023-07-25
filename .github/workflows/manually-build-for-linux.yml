@@ -14,49 +14,49 @@ on:
           - s390x
 
       enable-manpages:
-        description: whether generate manpages
+        description: whether to generate manpages
         type: boolean
         required: false
         default: false
 
       enable-json:
-        description: whether enable json support
+        description: whether to enable json support
         type: boolean
         required: false
         default: true
 
       enable-yaml:
-        description: whether enable yaml support
+        description: whether to enable yaml support
         type: boolean
         required: false
         default: true
 
       enable-xml:
-        description: whether enable xml support
+        description: whether to enable xml support
         type: boolean
         required: false
         default: true
 
       enable-libiconv:
-        description: whether enable libiconv support
+        description: whether to enable libiconv support
         type: boolean
         required: false
         default: true
 
       enable-seccomp:
-        description: whether enable seccomp support
+        description: whether to enable seccomp support
         type: boolean
         required: false
         default: false
 
       enable-threads:
-        description: whether enable threads support
+        description: whether to enable threads support
         type: boolean
         required: false
         default: true
 
       enable-largefile:
-        description: whether enable large file support
+        description: whether to enable large file support
         type: boolean
         required: false
         default: true
@@ -213,5 +213,5 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: uctags---linux-${{ github.event.inputs.target-arch }}-tar-xz
+          name: uctags---linux-${{ github.event.inputs.target-arch }}.tar.xz
           path: uctags-*-linux-${{ github.event.inputs.target-arch }}.tar.xz
