@@ -118,7 +118,7 @@ jobs:
           esac
 
           pacman -Syy --noconfirm
-          pacman -S   --noconfirm automake autoconf make pkg-config mingw-w64-x86_64-toolchain python3 file zip
+          pacman -S   --noconfirm automake autoconf make pkg-config mingw-w64-x86_64-toolchain python3 file zip git
 
           for item in $DEP_PKG
           do
@@ -133,6 +133,7 @@ jobs:
               pip3 install -U sphinx
           fi
 
+          git config --global core.autocrlf input
           git clone --depth=1 https://github.com/universal-ctags/ctags
           cd ctags
           ./autogen.sh
