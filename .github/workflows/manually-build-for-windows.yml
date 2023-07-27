@@ -80,28 +80,28 @@ jobs:
               CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-json"
           else
               CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-json"
-              DEP_PKG="$DEP_PKG,jansson"
+              DEP_PKG="$DEP_PKG jansson"
           fi
 
           if [ '${{ github.event.inputs.enable-yaml }}' = 'false' ] ; then
               CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-yaml"
           else
               CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-yaml"
-              DEP_PKG="$DEP_PKG,libyaml"
+              DEP_PKG="$DEP_PKG libyaml"
           fi
 
           if [ '${{ github.event.inputs.enable-xml }}' = 'false' ] ; then
               CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-xml"
           else
               CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-xml"
-              DEP_PKG="$DEP_PKG,libxml2"
+              DEP_PKG="$DEP_PKG libxml2"
           fi
 
           if [ '${{ github.event.inputs.enable-libiconv }}' = 'false' ] ; then
               CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-libiconv"
           else
               CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-libiconv"
-              DEP_PKG="$DEP_PKG,libiconv"
+              DEP_PKG="$DEP_PKG libiconv"
           fi
 
           case ${{ github.event.inputs.regex-backend }} in
@@ -113,7 +113,7 @@ jobs:
                 ;;
               pcre2)
                 CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-pcre2"
-                DEP_PKG="$DEP_PKG,pcre2"
+                DEP_PKG="$DEP_PKG pcre2"
                 ;;
               *) echo "unexpected regex-backend: ${{ github.event.inputs.regex-backend }}"
           esac
@@ -121,9 +121,10 @@ jobs:
           pacman -Syy --noconfirm
           pacman -S   --noconfirm automake autoconf make pkg-config gcc python3 file zip
 
-          if [ -n "$DEP_PKG" ] ; then
-              pacman -S --noconfirm "mingw-w64-x86_64-{${DEP_PKG#,}}"
-          fi
+          for item in $DEP_PKG
+          do
+              pacman -S --noconfirm "mingw-w64-x86_64-$item"
+          done
 
           if [ "${{ github.event.inputs.enable-manpages }}" = true ] ; then
               pip3 install -U docutils
