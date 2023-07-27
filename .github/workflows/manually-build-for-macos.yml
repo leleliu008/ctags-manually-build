@@ -103,9 +103,9 @@ jobs:
           fi
 
           if [ '${{ github.event.inputs.enable-libiconv }}' = 'false' ] ; then
-              CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-libiconv"
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-iconv"
           else
-              CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-libiconv"
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-iconv"
               DEP_PKG="$DEP_PKG libiconv"
           fi
 
