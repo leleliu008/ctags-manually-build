@@ -134,13 +134,10 @@ jobs:
               pip3 install -U sphinx
           fi
 
-          TIMESTAMP="$(date +%Y.%m.%d.%H.%M.%S)"
-          OUTPUT_DIR="uctags-${TIMESTAMP}-windows-${{ github.event.inputs.target-arch }}"
-
           git clone --depth=1 https://github.com/universal-ctags/ctags
           cd ctags
           ./autogen.sh
-          ./configure --disable-external-sort --enable-static $CONFIGURE_ARGS --prefix=$OUTPUT_DIR
+          ./configure --disable-external-sort --enable-static $CONFIGURE_ARGS --prefix=$PWD/out
           make -j2
           make install
 
@@ -148,6 +145,11 @@ jobs:
 
           file ctags.exe
           ldd  ctags.exe
+
+          TIMESTAMP="$(date +%Y.%m.%d.%H.%M.%S)"
+          OUTPUT_DIR="uctags-${TIMESTAMP}-windows-${{ github.event.inputs.target-arch }}"
+
+          mv out "$OUTPUT_DIR"
 
           if [ "${{ github.event.inputs.enable-htmldocs }}" = true ] ; then
               make -C docs html
