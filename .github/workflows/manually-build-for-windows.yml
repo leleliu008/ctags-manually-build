@@ -171,7 +171,7 @@ jobs:
 
           zip -9 -r "${OUTPUT_DIR}.zip" "$OUTPUT_DIR"
 
-          mv "${OUTPUT_DIR}.zip" ${{ github.workspace }}
+          mv "${OUTPUT_DIR}.zip" ../
         shell: C:\msys64\msys2_shell.cmd -no-start -defterm -mingw64 -here -full-path -shell bash -e -x {0}
 
 
