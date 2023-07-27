@@ -178,7 +178,7 @@ jobs:
           run zip -9 -r "${OUTPUT_DIR}.zip" "$OUTPUT_DIR"
 
           run mv -v "${OUTPUT_DIR}.zip" ../
-        shell: C:\msys64\msys2_shell.cmd -no-start -defterm -mingw64 -here -full-path -shell bash -e -x {0}
+        shell: C:\msys64\msys2_shell.cmd -no-start -defterm -mingw64 -here -full-path -shell bash -e {0}
 
       - uses: actions/upload-artifact@v3
         with:
