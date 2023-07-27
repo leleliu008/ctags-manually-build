@@ -16,49 +16,41 @@ on:
       enable-manpages:
         description: whether to generate manpages
         type: boolean
-        required: false
         default: false
 
       enable-json:
         description: whether to enable json support
         type: boolean
-        required: false
         default: true
 
       enable-yaml:
         description: whether to enable yaml support
         type: boolean
-        required: false
         default: true
 
       enable-xml:
         description: whether to enable xml support
         type: boolean
-        required: false
         default: true
 
       enable-libiconv:
         description: whether to enable libiconv support
         type: boolean
-        required: false
         default: true
 
       enable-seccomp:
         description: whether to enable seccomp support
         type: boolean
-        required: false
         default: false
 
       enable-threads:
         description: whether to enable threads support
         type: boolean
-        required: false
         default: true
 
       enable-largefile:
         description: whether to enable large file support
         type: boolean
-        required: false
         default: true
 
       regex-backend:
@@ -68,7 +60,6 @@ on:
           - none
           - gnu-regex
           - pcre2
-        required: false
         default: gnu-regex
 
 jobs:
