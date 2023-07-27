@@ -137,6 +137,8 @@ jobs:
           TIMESTAMP="$(date +%Y.%m.%d.%H.%M.%S)"
           OUTPUT_DIR="uctags-${TIMESTAMP}-windows-${{ github.event.inputs.target-arch }}"
 
+          git clone --depth=1 https://github.com/universal-ctags/ctags
+          cd ctags
           ./autogen.sh
           ./configure --disable-external-sort --enable-static $CONFIGURE_ARGS --prefix=$OUTPUT_DIR
           make -j2
@@ -166,6 +168,8 @@ jobs:
           fi
 
           zip -9 -r "${OUTPUT_DIR}.zip" "$OUTPUT_DIR"
+
+          mv "${OUTPUT_DIR}.zip" ${{ github.workspace }}
         shell: C:\msys64\msys2_shell.cmd -no-start -defterm -mingw64 -here -full-path -shell bash -e -x {0}
 
 
