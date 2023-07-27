@@ -101,7 +101,6 @@ jobs:
               CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-iconv"
           else
               CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-iconv"
-              DEP_PKG="$DEP_PKG libiconv-devel"
           fi
 
           case ${{ github.event.inputs.regex-backend }} in
@@ -119,7 +118,7 @@ jobs:
           esac
 
           pacman -Syy --noconfirm
-          pacman -S   --noconfirm automake autoconf make pkg-config gcc python3 file zip
+          pacman -S   --noconfirm automake autoconf make pkg-config mingw-w64-x86_64-toolchain python3 file zip
 
           for item in $DEP_PKG
           do
