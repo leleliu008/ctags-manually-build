@@ -14,6 +14,11 @@ on:
         type: boolean
         default: false
 
+      enable-htmldocs:
+        description: whether to generate htmldocs
+        type: boolean
+        default: false
+
       enable-json:
         description: whether to enable json support
         type: boolean
@@ -61,6 +66,17 @@ jobs:
     steps:
       - name: build
         run: |
+          unset IFS
+
+          COLOR_GREEN='\033[0;32m'        # Green
+          COLOR_PURPLE='\033[0;35m'       # Purple
+          COLOR_OFF='\033[0m'             # Reset
+
+          run() {
+              printf '%b\n' "${COLOR_PURPLE}==>${COLOR_OFF} ${COLOR_GREEN}$*${COLOR_OFF}"
+              eval "$@"
+          }
+
           unset DEP_PKG
           unset CONFIGURE_ARGS
 
@@ -117,63 +133,52 @@ jobs:
               *) echo "unexpected regex-backend: ${{ github.event.inputs.regex-backend }}"
           esac
 
-          pacman -Syy --noconfirm
-          pacman -S   --noconfirm automake autoconf make pkg-config mingw-w64-x86_64-toolchain python3 file zip git
+          run pacman -Syy --noconfirm
+          run pacman -S   --noconfirm automake autoconf make pkg-config mingw-w64-x86_64-toolchain python3 file zip git
 
           for item in $DEP_PKG
           do
-              pacman -S --noconfirm "mingw-w64-x86_64-$item"
+              run pacman -S --noconfirm "mingw-w64-x86_64-$item"
           done
 
           if [ "${{ github.event.inputs.enable-manpages }}" = true ] ; then
-              pip3 install -U docutils
+              run pip3 install -U docutils
           fi
 
           if [ "${{ github.event.inputs.enable-htmldocs }}" = true ] ; then
-              pip3 install -U sphinx
+              run pip3 install -U sphinx
           fi
 
-          git config --global core.autocrlf input
-          git clone --depth=1 https://github.com/universal-ctags/ctags
-          cd ctags
-          ./autogen.sh
-          ./configure --disable-external-sort --enable-static $CONFIGURE_ARGS --prefix=$PWD/out
-          make -j2
-          make install
+          run git config --global core.autocrlf input
+          run git clone --depth=1 https://github.com/universal-ctags/ctags
+          run cd ctags
+          run ./autogen.sh
+          run ./configure --disable-external-sort --enable-static $CONFIGURE_ARGS --prefix=$PWD/out
+          run make -j2
+          run make install
 
-          ls -l
+          run ls -l
 
-          file ctags.exe
-          ldd  ctags.exe
+          run file ctags.exe
+          run ldd  ctags.exe
+
+          run ./ctags.exe --version
 
           TIMESTAMP="$(date +%Y.%m.%d.%H.%M.%S)"
           OUTPUT_DIR="uctags-${TIMESTAMP}-windows-${{ github.event.inputs.target-arch }}"
 
-          mv out "$OUTPUT_DIR"
+          run mv -v out "$OUTPUT_DIR"
 
           if [ "${{ github.event.inputs.enable-htmldocs }}" = true ] ; then
-              make -C docs html
-              install -d          "$OUTPUT_DIR/share/doc/"
-              mv docs/_build/html "$OUTPUT_DIR/share/doc/"
+              run make -C docs html
+              install -v -d          "$OUTPUT_DIR/share/doc/"
+              mv -v docs/_build/html "$OUTPUT_DIR/share/doc/"
           fi
 
-          if [ "${{ github.event.inputs.enable-manpages }}" = true ] ; then
-              make -C man
+          run zip -9 -r "${OUTPUT_DIR}.zip" "$OUTPUT_DIR"
 
-              install -d "$OUTPUT_DIR/share/man/man1/"
-              install -d "$OUTPUT_DIR/share/man/man5/"
-              install -d "$OUTPUT_DIR/share/man/man7/"
- 
-              cp man/*.1 "$OUTPUT_DIR/share/man/man1/"
-              cp man/*.5 "$OUTPUT_DIR/share/man/man5/"
-              cp man/*.7 "$OUTPUT_DIR/share/man/man7/"
-          fi
-
-          zip -9 -r "${OUTPUT_DIR}.zip" "$OUTPUT_DIR"
-
-          mv "${OUTPUT_DIR}.zip" ../
+          run mv -v "${OUTPUT_DIR}.zip" ../
         shell: C:\msys64\msys2_shell.cmd -no-start -defterm -mingw64 -here -full-path -shell bash -e -x {0}
-
 
       - uses: actions/upload-artifact@v3
         with:
