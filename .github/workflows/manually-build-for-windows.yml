@@ -4,147 +4,147 @@ on:
   workflow_dispatch:
     inputs:
       target-arch:
-        description: choose the target arch to be built for
+        description: choose a target arch to be built for
         type: choice
         options:
-          - x64
-          - x86
-
-      msvc-version:
-        description: choose the Visual Studio version to be built with
-        type: choice
-        options:
-          - 2022
-          - 2019
-
-      enable-libiconv:
-        description: whether to enable libiconv support
-        type: boolean
-        default: false
+          - x86_64
 
       enable-manpages:
         description: whether to generate manpages
         type: boolean
         default: false
 
-      enable-htmldocs:
-        description: whether to generate htmldocs
+      enable-json:
+        description: whether to enable json support
         type: boolean
-        default: false
+        default: true
+
+      enable-yaml:
+        description: whether to enable yaml support
+        type: boolean
+        default: true
+
+      enable-xml:
+        description: whether to enable xml support
+        type: boolean
+        default: true
+
+      enable-libiconv:
+        description: whether to enable libiconv support
+        type: boolean
+        default: true
+
+      enable-threads:
+        description: whether to enable threads support
+        type: boolean
+        default: true
+
+      enable-largefile:
+        description: whether to enable large file support
+        type: boolean
+        default: true
+
+      regex-backend:
+        description: choose a regex backend to be built with
+        type: choice
+        options:
+          - none
+          - gnu-regex
+          - pcre2
+        default: gnu-regex
 
 jobs:
   build:
 
-    runs-on: windows-${{ github.event.inputs.msvc-version }}
-
-    defaults:
-      run:
-        shell: cmd /C {0}
+    runs-on: ubuntu-latest
 
     steps:
-      - run: choco install -y file zip
-
-      - uses: actions/checkout@v3
-        with:
-          repository: 'universal-ctags/ctags'
-
-      - if: ${{ github.event.inputs.enable-libiconv == 'true' }}
-        name: build uctags with nmake (enable-libiconv)
+      - name: create formula
         run: |
-          if "${{ github.event.inputs.msvc-version }}" == "2019" (
-            set "XX= (x86)"
-          ) else (
-            set "XX="
-          )
+          unset DEP_PKG
+          unset CONFIGURE_ARGS
 
-          if "${{ github.event.inputs.target-arch }}" == "x64" (
-            set "TARGET_ARCH=amd64"
-          ) else (
-            set "TARGET_ARCH=x86"
-          )
+          if [ '${{ github.event.inputs.enable-threads }}' = 'false' ] ; then
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-threads"
+          else
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-threads"
+          fi
 
-          @echo on
+          if [ '${{ github.event.inputs.enable-largefile }}' = 'false' ] ; then
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-largefile"
+          else
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-largefile"
+          fi
 
-          :: Setup MSVC build environment
-          call "C:\Program Files%XX%\Microsoft Visual Studio\${{ github.event.inputs.msvc-version }}\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" %TARGET_ARCH%
+          if [ '${{ github.event.inputs.enable-json }}' = 'false' ] ; then
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-json"
+          else
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-json"
+              DEP_PKG="$DEP_PKG,jansson"
+          fi
 
-          :: Build libiconv (MSVC port)
-          @echo on
-          git clone --depth=1 https://github.com/koron/libiconv.git
-          cd libiconv\msvc10
-          nmake NODEBUG=1 NOMSVCRT=1
+          if [ '${{ github.event.inputs.enable-yaml }}' = 'false' ] ; then
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-yaml"
+          else
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-yaml"
+              DEP_PKG="$DEP_PKG,libyaml"
+          fi
 
-          :: Install libiconv
-          set LIBICONV_INSTALL_DIR=${{ github.workspace }}\libiconv-installed
+          if [ '${{ github.event.inputs.enable-xml }}' = 'false' ] ; then
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-xml"
+          else
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-xml"
+              DEP_PKG="$DEP_PKG,libxml2"
+          fi
 
-          mkdir          "%LIBICONV_INSTALL_DIR%\include"
-          copy iconv.h   "%LIBICONV_INSTALL_DIR%\include"
+          if [ '${{ github.event.inputs.enable-libiconv }}' = 'false' ] ; then
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-libiconv"
+          else
+              CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-libiconv"
+              DEP_PKG="$DEP_PKG,libiconv"
+          fi
 
-          mkdir          "%LIBICONV_INSTALL_DIR%\lib"
-          copy iconv.lib "%LIBICONV_INSTALL_DIR%\lib"
+          case ${{ github.event.inputs.regex-backend }} in
+              none)
+                CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-pcre2 --without-included-regex"
+                ;;
+              gnu-regex)
+                CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-pcre2 --with-included-regex"
+                ;;
+              pcre2)
+                CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-pcre2"
+                DEP_PKG="$DEP_PKG,pcre2"
+                ;;
+              *) echo "unexpected regex-backend: ${{ github.event.inputs.regex-backend }}"
+          esac
 
-          copy iconv.dll "${{ github.workspace }}"
+          pacman -Syy --noconfirm
+          pacman -S   --noconfirm automake autoconf make pkg-config gcc python3 file zip
 
-          :: Build ctags with nmake
-          cd ${{ github.workspace }}
-          nmake -f mk_mvc.mak WITH_ICONV=yes ICONV_DIR=%LIBICONV_INSTALL_DIR% PDB=yes
+          if [ -n "$DEP_PKG" ] ; then
+              pacman -S --noconfirm "mingw-w64-x86_64-{$DEP_PKG}"
+          fi
 
-          dumpbin /dependents ctags.exe
+          if [ "${{ github.event.inputs.enable-manpages }}" = true ] ; then
+              pip3 install -U docutils
+          fi
 
-      - if: ${{ github.event.inputs.enable-libiconv == 'false' }}
-        name: build uctags with nmake
-        run: |
-          if "${{ github.event.inputs.msvc-version }}" == "2019" (
-            set "XX= (x86)"
-          ) else (
-            set "XX="
-          )
-
-          if "${{ github.event.inputs.target-arch }}" == "x64" (
-            set "TARGET_ARCH=amd64"
-          ) else (
-            set "TARGET_ARCH=x86"
-          )
-
-          @echo on
-
-          call "C:\Program Files%XX%\Microsoft Visual Studio\${{ github.event.inputs.msvc-version }}\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" %TARGET_ARCH%
-
-          @echo on
-
-          cd ${{ github.workspace }}
-
-          nmake -f mk_mvc.mak PDB=yes
-
-          dumpbin /dependents ctags.exe
-
-      - run: file ctags.exe
-      - run: ctags.exe --version
-
-      - name: pack uctags
-        run: |
-          ls -l
+          if [ "${{ github.event.inputs.enable-htmldocs }}" = true ] ; then
+              pip3 install -U sphinx
+          fi
 
           TIMESTAMP="$(date +%Y.%m.%d.%H.%M.%S)"
           OUTPUT_DIR="uctags-${TIMESTAMP}-windows-${{ github.event.inputs.target-arch }}"
 
-          install -d "$OUTPUT_DIR/bin/"
+          ./autogen.sh
+          ./configure --disable-external-sort --enable-static $CONFIGURE_ARGS --prefix=$OUTPUT_DIR
+          make -j2
+          make install
 
-          cp ctags.exe readtags.exe "$OUTPUT_DIR/bin/"
+          ls -l
 
-          if [ "${{ github.event.inputs.enable-libiconv }}" = true ] ; then
-              cp iconv.dll "$OUTPUT_DIR/bin/"
-          fi
-
-          if [ "${{ github.event.inputs.enable-manpages }}" = true ] || [ "${{ github.event.inputs.enable-htmldocs }}" = true ] ; then
-              pacman -Syy --noconfirm
-              pacman -S   --noconfirm automake autoconf make pkg-config gcc
-
-              pip3 install -U docutils sphinx
-
-              ./autogen.sh
-              ./configure --disable-iconv
-          fi
+          file ctags.exe
+          ldd  ctags.exe
 
           if [ "${{ github.event.inputs.enable-htmldocs }}" = true ] ; then
               make -C docs html
@@ -166,6 +166,7 @@ jobs:
 
           zip -9 -r "${OUTPUT_DIR}.zip" "$OUTPUT_DIR"
         shell: C:\msys64\msys2_shell.cmd -no-start -defterm -mingw64 -here -full-path -shell bash -e -x {0}
+
 
       - uses: actions/upload-artifact@v3
         with:
