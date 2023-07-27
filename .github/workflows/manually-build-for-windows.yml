@@ -1,4 +1,4 @@
-name: manually build uctags for windows
+name: manually build uctags for windows via MSYS2/MINGW64
 
 on:
   workflow_dispatch:
@@ -56,10 +56,10 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-2022
 
     steps:
-      - name: create formula
+      - name: build
         run: |
           unset DEP_PKG
           unset CONFIGURE_ARGS

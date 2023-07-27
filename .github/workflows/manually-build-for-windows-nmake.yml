@@ -1,4 +1,4 @@
-name: manually build uctags for windows
+name: manually build uctags for windows via nmake
 
 on:
   workflow_dispatch:
