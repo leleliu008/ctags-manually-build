@@ -148,7 +148,7 @@ jobs:
 
             run mv uctags.yml ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-            run ./ppkg install uctags --link-type=static-only --install-lib=static
+            run ./ppkg install uctags --link-type=static-full --install-lib=static
             run ./ppkg pack    uctags
 
       - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/.ppkg/packed/uctags-*-openbsd-amd64.tar.xz .
