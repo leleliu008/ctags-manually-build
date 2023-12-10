@@ -8,6 +8,19 @@ on:
         type: choice
         options:
           - amd64
+          - arm64
+
+      target-vers:
+        description: choose which netbsd version to be built with
+        type: choice
+        options:
+          - 9.3
+          - 9.2
+          - 9.1
+          - 9.0
+          - 8.2
+          - 8.1
+          - 8.0
 
       enable-manpages:
         description: whether to generate manpages
@@ -56,7 +69,7 @@ on:
 jobs:
   build:
 
-    runs-on: macos-12
+    runs-on: ubuntu-latest
 
     steps:
       - name: create formula
@@ -113,7 +126,7 @@ jobs:
                 ;;
               pcre2)
                 CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-pcre2"
-                DEP_PKG="$DEP_PKG pcre2"
+                DEP_PKG="$DEP_PKG libpcre2"
                 ;;
               *) echo "unexpected regex-backend: ${{ github.event.inputs.regex-backend }}"
           esac
@@ -127,40 +140,17 @@ jobs:
           install: configure $CONFIGURE_ARGS
           EOF
 
-      - uses: leleliu008/github-actions-vagrant@main
-        with:
-          mem: 4096
-          box: generic/netbsd9
-          run: |
-            export HOME=/home/vagrant
+      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+      - run: chmod a+x ppkg
+      - run: ./ppkg setup
+      - run: ./ppkg update
 
-            run sudo sed -i 's/#ETCCERTSDIR=/ETCCERTSDIR=/' /usr/pkg/etc/ca-certificates-dir.conf
-            run sudo update-ca-certificates
+      - run: mv uctags.yml ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-            unset ETCCERTSDIR
-
-            ETCCERTSDIR=$(sed -n '/^ETCCERTSDIR=/p' /usr/pkg/etc/ca-certificates-dir.conf | sed 's|ETCCERTSDIR=\(.*\)|\1|')
-
-            if [ -n "$ETCCERTSDIR" ] ; then
-                export SSL_CERT_FILE="$ETCCERTSDIR/ca-certificates.crt"
-            fi
-
-            run sudo pkgin -y update
-            run sudo pkgin -y install llvm
-
-            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-            run chmod a+x ppkg
-            run ./ppkg setup
-            run ./ppkg update
-
-            run mv uctags.yml ~/.ppkg/repos.d/offical-core/formula/uctags.yml
-
-            run ./ppkg install uctags --link-type=static-full --install-lib=static
-            run ./ppkg pack    uctags
-
-      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/.ppkg/packed/uctags-*-netbsd-amd64.tar.xz .
+      - run: ./ppkg install netbsd-${{ github.event.inputs.target-vers }}-${{ github.event.inputs.target-arch }}/uctags --link-type=static-full
+      - run: ./ppkg pack    netbsd-${{ github.event.inputs.target-vers }}-${{ github.event.inputs.target-arch }}/uctags
 
       - uses: actions/upload-artifact@v3
         with:
-          name: uctags---netbsd-amd64.tar.xz
-          path: uctags-*-netbsd-amd64.tar.xz
+          name: uctags---netbsd-${{ github.event.inputs.target-vers }}-${{ github.event.inputs.target-arch }}.tar.xz
+          path: uctags-*-netbsd-${{ github.event.inputs.target-vers }}-${{ github.event.inputs.target-arch }}.tar.xz
