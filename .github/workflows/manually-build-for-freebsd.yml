@@ -8,6 +8,25 @@ on:
         type: choice
         options:
           - amd64
+          - arm64
+
+      target-vers:
+        description: choose which freebsd version to be built with
+        type: choice
+        options:
+          - 13.2
+          - 13.1
+          - 13.0
+          - 12.4
+          - 12.3
+          - 12.2
+          - 12.1
+          - 12.0
+          - 11.4
+          - 11.3
+          - 11.2
+          - 11.1
+          - 11.0
 
       enable-manpages:
         description: whether to generate manpages
@@ -56,7 +75,7 @@ on:
 jobs:
   build:
 
-    runs-on: macos-12
+    runs-on: ubuntu-latest
 
     steps:
       - name: create formula
@@ -127,29 +146,17 @@ jobs:
           install: configure $CONFIGURE_ARGS
           EOF
 
-      - uses: leleliu008/github-actions-vagrant@main
-        with:
-          mem: 4096
-          box: generic/freebsd13
-          run: |
-            export HOME=/home/vagrant
+      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+      - run: chmod a+x ppkg
+      - run: ./ppkg setup
+      - run: ./ppkg update
 
-            run pkg update
-            run pkg install -y gcc curl libnghttp2
+      - run: mv uctags.yml ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-            run chmod a+x ppkg
-            run ./ppkg setup
-            run ./ppkg update
-
-            run mv uctags.yml ~/.ppkg/repos.d/offical-core/formula/uctags.yml
-
-            run ./ppkg install uctags --link-type=static-full --install-lib=static
-            run ./ppkg pack    uctags
-
-      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/.ppkg/packed/uctags-*-freebsd-amd64.tar.xz .
+      - run: ./ppkg install freebsd-${{ github.event.inputs.target-vers }}-${{ github.event.inputs.target-arch }}/uctags --link-type=static-full --install-lib=static
+      - run: ./ppkg pack    freebsd-${{ github.event.inputs.target-vers }}-${{ github.event.inputs.target-arch }}/uctags
 
       - uses: actions/upload-artifact@v3
         with:
-          name: uctags---freebsd-amd64.tar.xz
-          path: uctags-*-freebsd-amd64.tar.xz
+          name: uctags---freebsd-${{ github.event.inputs.target-vers }}-${{ github.event.inputs.target-arch }}.tar.xz
+          path: uctags-*-freebsd-${{ github.event.inputs.target-vers }}-${{ github.event.inputs.target-arch }}.tar.xz
