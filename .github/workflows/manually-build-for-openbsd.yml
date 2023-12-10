@@ -133,7 +133,7 @@ jobs:
           license: GPL-2.0-or-later
           dep-pkg: $DEP_PKG
           bsystem: autogen
-          install: configure $CONFIGURE_ARGS
+          install: configure $CONFIGURE_ARGS --disable-static
           EOF
 
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
